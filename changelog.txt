@@ -107,12 +107,12 @@
 #                        * changed some hotkeys
 #
 #
-#   2016/01/11 v0.6   -  * added division into blocks with different colors
+#   2017/01/02 v0.6   -  * added division into blocks with different colors
 #                        * added an address gadget type (now you have code, address and immediate)
 #                        * added colors to the hex dump and mouse highlight
 #                        * numerous bugs and issues fixed
 #
-#
+#   2017/01/02 v0.6.1 -  * added exporting into a Python script
 #
 #   contributors         : Elias Bachaalany, Karthik, Ivanlef0u, alexei-argus
 #

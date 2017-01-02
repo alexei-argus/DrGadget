@@ -13,7 +13,7 @@ todo:
 
 pluginname = "Dr.Gadget"
 __author__ = "patois"
-__version__ = "0.6"
+__version__ = "0.6.1"
 
 import struct, os, sys
 from idaapi import *
