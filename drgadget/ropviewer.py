@@ -705,52 +705,40 @@ class ropviewer_t(idaapi.simplecustviewer_t):
 
         # look for very high block numbers and replace them
         renumbering = {}
+        previous_block_number = None
+        visited_blocks = set()
+
         for i in xrange(lines_count):
+            invalid_block = False
+
             item = self.get_item(i)
             if item is None:
                 continue
-            if 0 <= item.block_num < lines_count:
-                continue
-            # an invalid block number - did we assign it a new number already?
+
+            # if we already assigned a renumbering for this block
+            # we just need to stick to it
             if item.block_num in renumbering:
                 item.block_num = renumbering[item.block_num]
-            else:
+                self.set_item(i, item)
+                continue
+
+            # verify block number
+            if not (0 <= item.block_num < lines_count):
+                invalid_block = True
+
+            if not (item.block_num == previous_block_number):
+                # start of a new block
+                if item.block_num not in visited_blocks:
+                    # a valid, previously unseen block
+                    visited_blocks.add(item.block_num)
+                else:
+                    invalid_block = True
+                previous_block_number = item.block_num
+
+            if invalid_block:
+                # found an invalid block with no renumbering
                 # assign a new number
                 new_number = unused_block_numbers.popleft()
                 renumbering[item.block_num] = new_number
                 item.block_num = new_number
-            self.set_item(i, item)
-
-        # since we renumbered the blocks there should be less available numbers
-        unused_block_numbers = self.get_unused_block_numbers()
-
-        # look for non-contiguous blocks
-        if lines_count < 3:
-            # too few lines for problems
-            return
-
-        previous_block_number = self.get_item(0).block_num
-        visited_blocks = {previous_block_number}
-        renumbering = {}
-
-        for i in xrange(1, lines_count):
-            item = self.get_item(i)
-            if item is None:
-                continue
-            if item.block_num == previous_block_number:
-                continue
-            # we're at the beginning of a new block
-            if item.block_num not in visited_blocks:
-                # a valid, previously unseen block
-                visited_blocks.add(item.block_num)
-                previous_block_number = item.block_num
-                continue
-
-            # found a non-contiguous block - did we assign it a new number already?
-            if item.block_num in renumbering:
-                item.block_num = renumbering[item.block_num]
-            else:
-                new_number = unused_block_numbers.popleft()
-                renumbering[item.block_num] = new_number
-                item.block_num = new_number
-            self.set_item(i, item)
+                self.set_item(i, item)
