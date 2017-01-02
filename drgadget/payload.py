@@ -170,7 +170,7 @@ class Payload:
         self.da = DisasmEngine(self.proc)
         self.init()
 
-    def init(self, items=[]):
+    def init(self, items=list()):
         self.items = items
 
     def load_from_idb(self):
@@ -193,11 +193,20 @@ class Payload:
                 pointer_pack_format_string = self.proc.get_ptr_pack_fmt_string()
                 pointer_format_string = "0x" + self.proc.get_data_fmt_string()
 
-                for item in self.items:
+                previous_block_number = None
+                block_counter = 0
+
+                for index, item in enumerate(self.items):
+                    if item.block_num != previous_block_number:
+                        f.write("# block %d\n" % block_counter)
+                        block_counter += 1
+                        previous_block_number = item.block_num
+
                     line = '''rop_buffer += struct.pack("%s", %s)''' % (pointer_pack_format_string,
                                                                         pointer_format_string % item.ea)
                     if len(item.comment) > 0:
-                        line += ("  # %s" % item.comment) @@@@@@@@@@@@@@@@@@
+                        line += ("  # %s" % item.comment)
+
                     f.write(line)
                     f.write('\n')
         except:
