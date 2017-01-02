@@ -93,6 +93,7 @@ class ropviewer_t(idaapi.simplecustviewer_t):
         self.menu_reset = None
         self.menu_comment = None
         self.menu_refresh = None
+        self.menu_savetopython = None
 
         self.window_created = False
 
@@ -320,7 +321,6 @@ class ropviewer_t(idaapi.simplecustviewer_t):
 
     def refresh(self):
         self.ClearLines()
-        # for line in self.create_colored_lines():
         for line, background_color in self.create_colored_lines_and_bgcolors():
             self.AddLine(line, bgcolor=background_color)
         self.Refresh()
@@ -433,6 +433,9 @@ class ropviewer_t(idaapi.simplecustviewer_t):
             elif vkey == ord("S"):
                 self.export_binary()
 
+            elif vkey == ord("P"):
+                self.export_to_python()
+
         elif vkey == 186:  # colon
             self.set_comment(self.GetLineNo())
 
@@ -535,6 +538,7 @@ class ropviewer_t(idaapi.simplecustviewer_t):
             self.AddPopupMenu("-")
             self.menu_loadfromfile = self.AddPopupMenu("Import ROP binary", "Ctrl-L")
             self.menu_savetofile = self.AddPopupMenu("Export ROP binary", "Ctrl-S")
+            self.menu_savetopython = self.AddPopupMenu("Export ROP to Python", "Ctrl-P")
             self.AddPopupMenu("-")
             self.menu_insertitem = self.AddPopupMenu("Insert item", "I")
             self.menu_makeblock = self.AddPopupMenu("Make block", "B")
@@ -563,14 +567,19 @@ class ropviewer_t(idaapi.simplecustviewer_t):
         return True
 
     def import_binary(self):
-        fileName = AskFile(0, "*.*", "Import ROP binary")
-        if fileName and self.payload.load_from_file(fileName):
+        file_name = AskFile(0, "*.*", "Import ROP binary")
+        if file_name and self.payload.load_from_binary(file_name):
             self.refresh()
 
     def export_binary(self):
-        fileName = AskFile(1, "*.*", "Export ROP binary")
-        if fileName and self.payload.save_to_file(fileName):
-            print "payload saved to %s" % fileName
+        file_name = AskFile(1, "*.*", "Export ROP binary")
+        if file_name and self.payload.save_to_binary(file_name):
+            print "payload saved to %s" % file_name
+
+    def export_to_python(self):
+        file_name = AskFile(1, "*.py", "Export ROP to Python")
+        if file_name and self.payload.save_to_python(file_name):
+            print "payload exported to %s" % file_name
 
     def erase_all(self):
         self.payload.init(items=[])
@@ -588,6 +597,9 @@ class ropviewer_t(idaapi.simplecustviewer_t):
 
         elif menu_id == self.menu_savetofile:
             self.export_binary()
+
+        elif menu_id == self.menu_savetopython:
+            self.export_to_python()
 
         elif menu_id == self.menu_jumpto:
             n = self.GetLineNo()
@@ -656,7 +668,6 @@ class ropviewer_t(idaapi.simplecustviewer_t):
 
         self.fix_block_numbers()
         self.refresh()
-
 
     def get_unused_block_numbers(self):
         lines_count = self.Count()
@@ -743,4 +754,3 @@ class ropviewer_t(idaapi.simplecustviewer_t):
                 renumbering[item.block_num] = new_number
                 item.block_num = new_number
             self.set_item(i, item)
-

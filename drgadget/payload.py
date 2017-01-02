@@ -3,6 +3,7 @@ from idc import *
 import pickle
 from idautils import DecodeInstruction
 import struct
+import traceback
 
 
 # add support for xrefs?
@@ -158,6 +159,7 @@ class DisasmEngine:
         return disasm
 
 
+# noinspection PyBroadException
 class Payload:
     def __init__(self):
         self.size = 0
@@ -184,33 +186,53 @@ class Payload:
         node.create(self.nodename)
         node.setblob(pickle.dumps(self.items), 0, "D")
 
-    def load_from_file(self, fileName):
+    def save_to_python(self, file_name):
+        try:
+            with open(file_name, 'w') as f:
+                f.write('''rop_buffer = ""\n''')
+                pointer_pack_format_string = self.proc.get_ptr_pack_fmt_string()
+                pointer_format_string = "0x" + self.proc.get_data_fmt_string()
+
+                for item in self.items:
+                    line = '''rop_buffer += struct.pack("%s", %s)''' % (pointer_pack_format_string,
+                                                                        pointer_format_string % item.ea)
+                    if len(item.comment) > 0:
+                        line += ("  # %s" % item.comment) @@@@@@@@@@@@@@@@@@
+                    f.write(line)
+                    f.write('\n')
+        except:
+            traceback.print_exc()
+            return False
+
+        return True
+
+    def load_from_binary(self, file_name):
         self.init()
         result = False
         f = None
         try:
-            f = open(fileName, "rb")
+            f = open(file_name, "rb")
             self.rawbuf = f.read()
             self.size = len(self.rawbuf)
             self.items = self.deserialize_items_from_buf(self.rawbuf)
             result = True
         except:
-            pass
+            traceback.print_exc()
         finally:
             if f:
                 f.close()
         return result
 
-    def save_to_file(self, fileName):
+    def save_to_binary(self, file_name):
         result = False
         f = None
         try:
-            f = open(fileName, "wb")
+            f = open(file_name, "wb")
             buf = self.serialize_buf_from_items()
             f.write(buf)
             result = True
         except:
-            pass
+            traceback.print_exc()
         finally:
             if f:
                 f.close()
@@ -236,7 +258,7 @@ class Payload:
         return len(self.items)
 
     def mask_ea(self, item):
-        item.ea = item.ea & self.proc.get_ptr_mask()
+        item.ea &= self.proc.get_ptr_mask()
         return item
 
     def get_item(self, n):
