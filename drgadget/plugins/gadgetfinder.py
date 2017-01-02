@@ -2,6 +2,7 @@ from idaapi import *
 from idc import *
 from idautils import Assemble, Modules, DecodeInstruction
 from payload import Item
+from plugin_base import DrGadgetPlugin
 
 
 class FindInstructionsForm(Form):
@@ -356,8 +357,10 @@ payload = None
 ropviewer = None
 
 
-class drgadgetplugin_t:
+class GadgetFinderPlugin(DrGadgetPlugin):
     def __init__(self, pl, rv):
+        super(GadgetFinderPlugin, self).__init__(pl, rv)
+
         global payload
         global ropviewer
 
@@ -373,6 +376,11 @@ class drgadgetplugin_t:
         global payload
         result = self.menucallbacks
         return result
+
+    def handle_key_down(self, vkey, shift):
+        # Ctrl-F3
+        if vkey == 114 and shift == 4:
+            self.run()
 
     def run(self):
         success, s = AskInstructionsUsingForm()

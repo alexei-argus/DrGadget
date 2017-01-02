@@ -9,10 +9,12 @@ from idc import *
 from collections import deque
 import dataviewers
 from payload import Item
+import importlib
 
 drgadget_plugins_path = idaapi.idadir(os.path.join("plugins", "drgadget", "plugins"))
-
 sys.path.append(drgadget_plugins_path)
+
+from plugin_base import DrGadgetPlugin
 
 HEX_DUMP_DISPLAY_LENGTH = 0x20
 HEX_DUMP_LINE_LENGTH = 4
@@ -120,17 +122,19 @@ class ropviewer_t(idaapi.simplecustviewer_t):
     def load_plugins(self):
         global drgadget_plugins_path
 
-        pluginlist = []
+        plugin_list = []
         print "loading extensions..."
         for (_path, _dir, files) in os.walk(drgadget_plugins_path):
             for f in files:
                 name, ext = os.path.splitext(f)
                 if ext == ".py":
                     print "* %s" % name
-                    plugin = __import__(name)
-                    # add instance of drgadgetplugin_t class to list
-                    pluginlist.append(plugin.drgadgetplugin_t(self.payload, self))
-        return pluginlist
+                    importlib.import_module(name)
+
+        for plugin_class in DrGadgetPlugin.__subclasses__():
+            plugin_list.append(plugin_class(self.payload, self))
+
+        return plugin_list
 
     # workaround for a bug (related to IDA itself?)
     # do not allow the window to be opened more than once
@@ -399,7 +403,7 @@ class ropviewer_t(idaapi.simplecustviewer_t):
     def OnKeydown(self, vkey, shift):
         n = self.GetLineNo()
 
-        # print "OnKeydown, vkey=%d shift=%d lineno = %d" % (vkey, shift, n)
+        print "OnKeydown, vkey=%d shift=%d lineno = %d" % (vkey, shift, n)
 
         # ESCAPE
         if vkey == 27:
@@ -435,6 +439,11 @@ class ropviewer_t(idaapi.simplecustviewer_t):
 
             elif vkey == ord("P"):
                 self.export_to_python()
+
+            else:
+                # inform all the plugins
+                for plugin in self.pluginlist:
+                    plugin.handle_key_down(vkey, shift)
 
         elif vkey == 186:  # colon
             self.set_comment(self.GetLineNo())
@@ -472,6 +481,11 @@ class ropviewer_t(idaapi.simplecustviewer_t):
         # up key
         elif vkey == 38:
             n = max(n - 1, 0)
+
+        else:
+            # inform all the plugins
+            for plugin in self.pluginlist:
+                plugin.handle_key_down(vkey, shift)
 
         self.update_content_viewers(n)
         return False  # always propagate the event onwards

@@ -1,6 +1,8 @@
 from idc import *
 from payload import Item
 import idaapi
+from plugin_base import DrGadgetPlugin
+
 
 """
 This plugin sets the internal "type" field
@@ -21,8 +23,10 @@ def analyze(payload):
                 payload.get_item(n).type = Item.TYPE_ADDRESS
 
 
-class drgadgetplugin_t:
+class SimpleAnalysisPlugin(DrGadgetPlugin):
     def __init__(self, payload, rv):
+        super(SimpleAnalysisPlugin, self).__init__(payload, rv)
+
         self.payload = payload
         self.rv = rv
         self.menucallbacks = [("Simple payload analysis", self.run, "Ctrl-F2")]
@@ -33,6 +37,11 @@ class drgadgetplugin_t:
     # or None if no callbacks should be installed    
     def get_callback_list(self):
         return self.menucallbacks
+
+    def handle_key_down(self, vkey, shift):
+        # Ctrl-F2
+        if vkey == 113 and shift == 4:
+            self.run()
 
     def run(self):
         analyze(self.payload)

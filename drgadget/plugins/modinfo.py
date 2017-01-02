@@ -1,7 +1,7 @@
 from idaapi import *
 from idc import *
 from idautils import Assemble, Modules
-from payload import Item
+from plugin_base import DrGadgetPlugin
 
 
 # -----------------------------------------------------------------------
@@ -82,13 +82,15 @@ def get_dll_characteristics(base, size):
                     if size > offs_pe + 0x5E + 2:
                         result = DbgWord(base + offs_pe + 0x5E)
     return result
-                    
+
+
 def get_modules():
     results = []
                             
     for mod in Modules():
         results.append(ModuleInfo(mod))
     return results
+
 
 def display_modules():
     mods = get_modules()
@@ -100,8 +102,10 @@ payload = None
 ropviewer = None
 
 
-class drgadgetplugin_t:
+class ModInfoPlugin(DrGadgetPlugin):
     def __init__(self, pl, rv):
+        super(ModInfoPlugin, self).__init__(pl, rv)
+
         global payload
         global ropviewer
         
@@ -117,7 +121,12 @@ class drgadgetplugin_t:
         global payload
         result = self.menucallbacks
         return result
-    
+
+    def handle_key_down(self, vkey, shift):
+        # Ctrl-F6
+        if vkey == 117 and shift == 4:
+            self.run()
+
     def run(self):
         if GetProcessState() == DSTATE_NOTASK:
             Warning("No modules.")

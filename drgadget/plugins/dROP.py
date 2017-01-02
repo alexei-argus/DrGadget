@@ -1,7 +1,7 @@
 from idaapi import *
 from idc import *
 from idautils import Assemble
-from payload import Item
+from plugin_base import DrGadgetPlugin
 
 
 # the following code was taken from
@@ -63,9 +63,9 @@ def FindInstructions(instr, asm_where=None):
         ret.append(ea)
         ea += tlen
     if not ret:
-        return (False, "Could not match [%s]" % bin_str)
+        return False, "Could not match [%s]" % bin_str
 
-    return (True, ret)
+    return True, ret
 
 
 # -----------------------------------------------------------------------
@@ -86,8 +86,10 @@ def find(s=None, x=False, asm_where=None):
     return result
 
 
-class drgadgetplugin_t:
+class dROPPlugin(DrGadgetPlugin):
     def __init__(self, payload, rv):
+        super(dROPPlugin, self).__init__(payload, rv)
+
         self.payload = payload
         self.rv = rv
         self.menucallbacks = [("dROP", self.run, "Ctrl-F5")]
@@ -101,6 +103,11 @@ class drgadgetplugin_t:
         if self.payload.proc.supports_assemble():
             result = self.menucallbacks
         return result
+
+    def handle_key_down(self, vkey, shift):
+        # Ctrl-F5
+        if vkey == 116 and shift == 4:
+            self.run()
 
     def run(self):
         n = self.rv.Count()
