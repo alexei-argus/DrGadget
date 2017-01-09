@@ -441,7 +441,7 @@ class ropviewer_t(idaapi.simplecustviewer_t):
                 for plugin in self.pluginlist:
                     plugin.handle_key_down(vkey, shift)
 
-        elif vkey == 186:  # colon
+        elif vkey == 45:  # Insert
             self.set_comment(self.GetLineNo())
 
         elif vkey == ord('O'):
@@ -554,7 +554,7 @@ class ropviewer_t(idaapi.simplecustviewer_t):
             self.menu_deleteitem = self.AddPopupMenu("Delete item", "D")
             self.menu_edititem = self.AddPopupMenu("Edit item", "E")
             self.menu_toggle = self.AddPopupMenu("Toggle item type", "O")
-            self.menu_comment = self.AddPopupMenu("Add comment", ":")
+            self.menu_comment = self.AddPopupMenu("Add comment", "Insert")
             self.menu_reset = self.AddPopupMenu("Reset types")
             self.menu_jumpto = self.AddPopupMenu("Go to item address", "Enter")
             self.AddPopupMenu("-")
